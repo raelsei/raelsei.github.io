@@ -1,0 +1,227 @@
+<!DOCTYPE html><html dir="ltr" lang="en" class="overflow-y-scroll motion-safe:scroll-smooth"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="canonical" href="https://koray.dev/posts/llm-cannot-hallucinate-what-you-never-sent/"><meta name="generator" content="Astro v7.3.2"><style>@font-face{font-family:"Clash Grotesk-3be10869b52dabae";src:url("/_astro/fonts/4aba4c9fb0dc71af.woff2") format("woff2");font-display:block;font-weight:500;font-style:normal;}@font-face{font-family:"Clash Grotesk-3be10869b52dabae";src:url("/_astro/fonts/6985c4946467f5be.woff2") format("woff2");font-display:block;font-weight:600;font-style:normal;}@font-face{font-family:"Clash Grotesk-3be10869b52dabae fallback: Arial";src:local("Arial");font-display:swap;font-weight:500;font-style:normal;size-adjust:99.8204%;ascent-override:89.1602%;descent-override:25.045%;line-gap-override:9.0162%;}@font-face{font-family:"Clash Grotesk-3be10869b52dabae fallback: Arial";src:local("Arial");font-display:swap;font-weight:600;font-style:normal;size-adjust:99.8204%;ascent-override:89.1602%;descent-override:25.045%;line-gap-override:9.0162%;}:root{--font-clash:"Clash Grotesk-3be10869b52dabae","Clash Grotesk-3be10869b52dabae fallback: Arial",sans-serif;}</style><link rel="preload" href="/_astro/fonts/4aba4c9fb0dc71af.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/_astro/fonts/6985c4946467f5be.woff2" as="font" type="font/woff2" crossorigin><style>@font-face{font-family:Switzer-a9f0c8cf6491ec8e;src:url("/_astro/fonts/e7b33f4ed43f85e7.woff2") format("woff2");font-display:block;font-weight:400;font-style:normal;}@font-face{font-family:Switzer-a9f0c8cf6491ec8e;src:url("/_astro/fonts/4b191dd3fe36805d.woff2") format("woff2");font-display:block;font-weight:500;font-style:normal;}@font-face{font-family:Switzer-a9f0c8cf6491ec8e;src:url("/_astro/fonts/9d66ccbcb13e626b.woff2") format("woff2");font-display:block;font-weight:600;font-style:normal;}@font-face{font-family:"Switzer-a9f0c8cf6491ec8e fallback: Arial";src:local("Arial");font-display:swap;font-weight:400;font-style:normal;size-adjust:100.269%;ascent-override:97.7371%;descent-override:24.9329%;line-gap-override:8.9759%;}@font-face{font-family:"Switzer-a9f0c8cf6491ec8e fallback: Arial";src:local("Arial");font-display:swap;font-weight:500;font-style:normal;size-adjust:100.269%;ascent-override:97.7371%;descent-override:24.9329%;line-gap-override:8.9759%;}@font-face{font-family:"Switzer-a9f0c8cf6491ec8e fallback: Arial";src:local("Arial");font-display:swap;font-weight:600;font-style:normal;size-adjust:100.269%;ascent-override:97.7371%;descent-override:24.9329%;line-gap-override:8.9759%;}:root{--font-switzer:Switzer-a9f0c8cf6491ec8e,"Switzer-a9f0c8cf6491ec8e fallback: Arial",sans-serif;}</style><link rel="preload" href="/_astro/fonts/e7b33f4ed43f85e7.woff2" as="font" type="font/woff2" crossorigin><title>Your LLM can&#39;t hallucinate a number it was never given | Koray Güler</title><meta name="title" content="Your LLM can't hallucinate a number it was never given | Koray Güler"><meta name="description" content="Preventing invented facts in the code that builds the prompt rather than in its instructions: no raw numbers, no empty fields, and opaque references instead of names."><meta name="author" content="Koray Güler"><link rel="sitemap" href="/sitemap-index.xml"><!-- Open Graph --><meta property="og:type" content="website"><meta property="og:site_name" content="Koray Güler"><meta property="og:locale" content="en_US"><meta property="og:title" content="Your LLM can't hallucinate a number it was never given | Koray Güler"><meta property="og:description" content="Preventing invented facts in the code that builds the prompt rather than in its instructions: no raw numbers, no empty fields, and opaque references instead of names."><meta property="og:url" content="https://koray.dev/posts/llm-cannot-hallucinate-what-you-never-sent/"><meta property="og:image" content="https://koray.dev/posts/llm-cannot-hallucinate-what-you-never-sent/index.png"><!-- Twitter / X --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:site" content="@raelsei"><meta property="twitter:url" content="https://koray.dev/posts/llm-cannot-hallucinate-what-you-never-sent/"><meta property="twitter:title" content="Your LLM can't hallucinate a number it was never given | Koray Güler"><meta property="twitter:description" content="Preventing invented facts in the code that builds the prompt rather than in its instructions: no raw numbers, no empty fields, and opaque references instead of names."><meta property="twitter:image" content="https://koray.dev/posts/llm-cannot-hallucinate-what-you-never-sent/index.png"><link rel="alternate" type="application/rss+xml" title="Koray Güler" href="https://koray.dev/rss.xml"><link rel="me" href="https://x.com/raelsei"><link rel="me" href="https://github.com/raelsei"><link rel="me" href="https://linkedin.com/in/raelsei"><link rel="me" href="https://www.instagram.com/raelsei/"><link rel="me" href="https://www.youtube.com/@raelsei"><link rel="me" href="https://www.producthunt.com/@raelsei"><link rel="me" href="https://peerlist.io/raelsei"><link rel="me" href="https://www.reddit.com/user/raelsei/"><link rel="me" href="https://www.instagram.com/koray.dev/"><link rel="me" href="https://www.youtube.com/@korayguler"><link rel="me" href="https://www.tiktok.com/@raelsei"><link rel="me" href="https://bsky.app/profile/raelsei.bsky.social"><link rel="me" href="https://medium.com/@raelsei"><link rel="me" href="https://dev.to/raelsei"><link rel="me" href="https://www.npmjs.com/~raelsei"><link rel="me" href="https://gitlab.com/raelsei"><link rel="me" href="mailto:hello@koray.dev"><meta name="theme-color" content="#08080a"><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Person","@id":"https://koray.dev/#person","name":"Koray Güler","url":"https://koray.dev/","image":"https://koray.dev/_astro/koray-dark.DXGICd30_Z1gKIEW.jpg","email":"hello@koray.dev","jobTitle":"Founder","worksFor":{"@type":"Organization","@id":"https://koative.com/#org","name":"koative","url":"https://koative.com/"},"sameAs":["https://x.com/raelsei","https://github.com/raelsei","https://linkedin.com/in/raelsei","https://www.instagram.com/raelsei/","https://www.youtube.com/@raelsei","https://www.producthunt.com/@raelsei","https://peerlist.io/raelsei","https://www.reddit.com/user/raelsei/","https://www.instagram.com/koray.dev/","https://www.youtube.com/@korayguler","https://www.tiktok.com/@raelsei","https://bsky.app/profile/raelsei.bsky.social","https://medium.com/@raelsei","https://dev.to/raelsei","https://www.npmjs.com/~raelsei","https://gitlab.com/raelsei"]},{"@type":"WebSite","@id":"https://koray.dev/#website","url":"https://koray.dev/","name":"Koray Güler","description":"Koray Güler — product engineer in İstanbul. OpenMacApps, Bucketdeck, Cento, Rast.","inLanguage":"en","publisher":{"@id":"https://koray.dev/#person"}},{"@type":"WebPage","@id":"https://koray.dev/posts/llm-cannot-hallucinate-what-you-never-sent/#webpage","url":"https://koray.dev/posts/llm-cannot-hallucinate-what-you-never-sent/","name":"Your LLM can't hallucinate a number it was never given","description":"Preventing invented facts in the code that builds the prompt rather than in its instructions: no raw numbers, no empty fields, and opaque references instead of names.","isPartOf":{"@id":"https://koray.dev/#website"},"inLanguage":"en","about":{"@id":"https://koray.dev/#person"}},{"@type":"BlogPosting","@id":"https://koray.dev/posts/llm-cannot-hallucinate-what-you-never-sent/#post","mainEntityOfPage":{"@id":"https://koray.dev/posts/llm-cannot-hallucinate-what-you-never-sent/#webpage"},"headline":"Your LLM can't hallucinate a number it was never given","description":"Preventing invented facts in the code that builds the prompt rather than in its instructions: no raw numbers, no empty fields, and opaque references instead of names.","image":"https://koray.dev/posts/llm-cannot-hallucinate-what-you-never-sent/index.png","datePublished":"2026-07-18T06:00:00.000Z","keywords":["llm"],"inLanguage":"en","author":{"@id":"https://koray.dev/#person"},"publisher":{"@id":"https://koray.dev/#person"},"isPartOf":{"@id":"https://koray.dev/#website"}},{"@type":"BreadcrumbList","@id":"https://koray.dev/posts/llm-cannot-hallucinate-what-you-never-sent/#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://koray.dev/"},{"@type":"ListItem","position":2,"name":"Writing","item":"https://koray.dev/writing/"},{"@type":"ListItem","position":3,"name":"Llm cannot hallucinate what you never sent"}]}]}</script><meta property="og:type" content="article"><meta property="article:published_time" content="2026-07-18T06:00:00.000Z"><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="animate"><script type="module" src="/_astro/ClientRouter.astro_astro_type_script_index_0_lang.CYDbzu1r.js"></script><link rel="stylesheet" href="/_astro/Footer.dRhN1JkO.css"></head><body class="bg-background font-app text-foreground flex min-h-svh flex-col"><a id="skip-to-content" href="#main-content" class="bg-foreground text-background absolute start-4 -top-full z-50 px-3 py-2 focus:top-4">Skip to content</a><header class="app-frame flex items-center justify-between gap-6 py-6 sm:py-8"><a href="/" class="font-display shrink-0 text-xl leading-none font-semibold tracking-[-0.02em] sm:text-2xl">Koray Güler</a><nav aria-label="Main"><ul class="text-soft flex gap-x-4 text-[0.9375rem] sm:gap-x-8 sm:text-base"><li><a href="/#work" class="link-quiet hover:text-foreground aria-[current=page]:text-foreground aria-[current=page]:decoration-foreground -my-3 inline-block py-3">Work</a></li><li><a href="/#log" class="link-quiet hover:text-foreground aria-[current=page]:text-foreground aria-[current=page]:decoration-foreground -my-3 inline-block py-3">Log</a></li><li><a href="/writing/" aria-current="page" class="link-quiet hover:text-foreground aria-[current=page]:text-foreground aria-[current=page]:decoration-foreground -my-3 inline-block py-3">Writing</a></li><li><a href="/about/" class="link-quiet hover:text-foreground aria-[current=page]:text-foreground aria-[current=page]:decoration-foreground -my-3 inline-block py-3">About</a></li></ul></nav></header><script type="module">function e(){let e=document.getElementById(`skip-to-content`);e&&e.addEventListener(`click`,e=>{if(e.defaultPrevented||e.metaKey||e.ctrlKey||e.shiftKey||e.button!==0)return;e.preventDefault();let t=document.getElementById(`main-content`);t&&(t.setAttribute(`tabindex`,`-1`),t.addEventListener(`blur`,()=>t.removeAttribute(`tabindex`),{once:!0}),t.focus(),t.scrollIntoView({behavior:matchMedia(`(prefers-reduced-motion: reduce)`).matches?`auto`:`smooth`}))})}e(),document.addEventListener(`astro:after-swap`,e);</script><div class="app-layout flex items-center justify-start"><a id="back-button" href="/" class="group inline-flex items-center gap-1 hover:text-accent focus-outline hover:text-foreground/75 -ms-2 mt-8 mb-2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="inline-block size-6 rtl:rotate-180" viewBox="0 0 24 24"><path stroke="none" d="M0 0h24v24H0z" /><path d="m15 6-6 6 6 6" /></svg><span>Go back</span></a></div><script type="module">function e(){let e=document.querySelector(`#back-button`),t=sessionStorage.getItem(`backUrl`);t&&e&&(e.href=t)}document.addEventListener(`astro:page-load`,e),e();</script><main id="main-content" class="app-layout" data-pagefind-body><p class="text-muted-foreground text-sm tabular-nums mt-6" style="view-transition-name:llm-cannot-hallucinate-what-you-never-sent-date"><time datetime="2026-07-18T06:00:00.000Z">18 Jul 2026</time><span aria-hidden="true">&ensp;·&ensp;</span><span>3 min read</span></p><h1 style="view-transition-name:llm-cannot-hallucinate-what-you-never-sent" class="font-display mt-3 text-[clamp(2.25rem,5.5vw,3.5rem)] leading-[1.04] font-medium tracking-[-0.03em]">Your LLM can&#39;t hallucinate a number it was never given</h1><article id="article" class="app-prose mt-12 w-full"><p>The system pairs a deterministic engine with a language model. The engine
+computes every quantity; the model only writes the prose. Users read that prose
+as authoritative, so an invented number is not a small glitch. It is the product
+stating something false in a sentence that looks exactly like a true one.</p>
+<p>Some of the engine’s output depends on an optional setup step that about half of
+users skip. So every prompt is built from a partly filled set of facts. The real
+question is not whether the model will make things up, but what happens in the
+place where a missing fact would have gone.</p>
+<h2 id="the-model-never-sees-a-number">The model never sees a number</h2>
+<p>The prompt contains nothing the model could do arithmetic on. The engine
+computes at full precision, rounds, maps the result to a named range, and
+translates that into the user’s language before the prompt is built. What
+reaches the model is a finished phrase.</p>
+<p>Translation happens before the prompt for the same reason. Ask a model to
+translate a proper noun and it will, plausibly and sometimes wrongly.</p>
+<h2 id="leave-the-line-out-not-blank">Leave the line out, not blank</h2>
+<pre class="astro-code vitesse-dark code-accent mt-8" style="background-color:#121212;color:#dbd7caee; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#CB7676">const </span><span style="color:#BD976A">lines</span><span style="color:#808080"> =</span><span style="color:#808080"> [</span></span>
+<span class="line"><span style="color:#9E776E">  `</span><span style="color:#C98A7D">baseline: </span><span style="color:#4D9375">${</span><span style="color:#80A665">renderBaseline</span><span style="color:#808080">(</span><span style="color:#C98A7D">input</span><span style="color:#808080">)</span><span style="color:#4D9375">}</span><span style="color:#9E776E">`</span><span style="color:#808080">,</span></span>
+<span class="line"><span style="color:#BD976A">  signals</span><span style="color:#808080">.</span><span style="color:#B8A965">length</span></span>
+<span class="line"><span style="color:#CB7676">    ? </span><span style="color:#9E776E">`</span><span style="color:#C98A7D">signals: </span><span style="color:#4D9375">${</span><span style="color:#80A665">rank</span><span style="color:#808080">(</span><span style="color:#C98A7D">signals</span><span style="color:#808080">).</span><span style="color:#80A665">slice</span><span style="color:#808080">(</span><span style="color:#4C9A91">0</span><span style="color:#808080">,</span><span style="color:#4C9A91"> 3</span><span style="color:#808080">).</span><span style="color:#80A665">map</span><span style="color:#808080">(</span><span style="color:#C98A7D">render</span><span style="color:#808080">).</span><span style="color:#80A665">join</span><span style="color:#808080">(</span><span style="color:#9E776E">"</span><span style="color:#C98A7D">; </span><span style="color:#9E776E">"</span><span style="color:#808080">)</span><span style="color:#4D9375">}</span><span style="color:#9E776E">`</span></span>
+<span class="line"><span style="color:#CB7676">    : null</span><span style="color:#808080">,</span></span>
+<span class="line"><span style="color:#BD976A">  phase</span><span style="color:#CB7676"> ? </span><span style="color:#9E776E">`</span><span style="color:#C98A7D">phase: </span><span style="color:#4D9375">${</span><span style="color:#80A665">renderPhase</span><span style="color:#808080">(</span><span style="color:#C98A7D">phase</span><span style="color:#808080">)</span><span style="color:#4D9375">}</span><span style="color:#9E776E">`</span><span style="color:#CB7676"> : null</span><span style="color:#808080">,</span></span>
+<span class="line"><span style="color:#808080">];</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#CB7676">const </span><span style="color:#BD976A">facts</span><span style="color:#808080"> =</span><span style="color:#BD976A"> lines</span><span style="color:#808080">.</span><span style="color:#80A665">filter</span><span style="color:#808080">((</span><span style="color:#BD976A">l</span><span style="color:#808080">):</span><span style="color:#BD976A"> l</span><span style="color:#CB7676"> is </span><span style="color:#5DA994">string</span><span style="color:#808080"> =&gt;</span><span style="color:#BD976A"> l</span><span style="color:#CB7676"> !== null</span><span style="color:#808080">).</span><span style="color:#80A665">join</span><span style="color:#808080">(</span><span style="color:#9E776E">"</span><span style="color:#C99076">\n</span><span style="color:#9E776E">"</span><span style="color:#808080">);</span></span></code><span class="absolute py-1 text-xs font-medium leading-4 text-accent border-accent pl-4 pr-2 before:inline-block before:size-1 before:bg-accent before:rounded-full before:absolute before:top-[45%] before:left-2 left-2 top-(--file-name-offset) border rounded-md bg-background">assemble.ts</span></pre>
+<p>There is no <code>signals: none</code>, no <code>phase: unknown</code>, no empty string, no <code>N/A</code>. A
+missing fact means a missing line.</p>
+<p>A labelled field with nothing in it invites the model to fill it, because that
+is what the shape of the text asks for. A field that is not there asks for
+nothing.</p>
+<p>The instructions cover the gap: if a signal is given, lead with it; if not, stay
+general and invent nothing. The output degrades to vaguer but true instead of
+specific and false. The instructions are a hint. What you put in the string is
+the actual limit.</p>
+<p>The top-three cap belongs here too. The engine can rank dozens of items; the
+prompt gets three. That is not about tokens. It stops the model padding a thin
+answer by listing everything it was given.</p>
+<h2 id="the-model-does-not-write-names-either">The model does not write names either</h2>
+<p>In the chat feature, when the model refers to an internal record, it cannot
+write the record’s name. It writes an opaque reference from a set of ids
+injected for that request:</p>
+<pre class="astro-code vitesse-dark mt-8" style="background-color:#121212;color:#dbd7caee; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="text"><code><span class="line"><span>That pattern points at &lt;&lt;ref 47&gt;&gt; more than anything else this week.</span></span></code><span class="absolute py-1 text-xs font-medium leading-4 text-foreground pl-4 pr-2 before:inline-block before:size-1 before:bg-muted-foreground before:rounded-full before:absolute before:top-[45%] before:left-2 left-2 top-(--file-name-offset) border rounded-md bg-background">reply.txt</span></pre>
+<p>The client resolves the reference to a localised name. The model can no longer
+misname or invent a record. The worst case is a reference that does not resolve,
+which is visible and harmless instead of quiet and wrong.</p>
+<p>That only holds if the client enforces the same set. An allowlist in the prompt
+is a prompt-side constraint, which is exactly what this post argues against
+trusting. The client must resolve only against the ids sent for this request and
+reject anything else. If it looks ids up in the full catalogue instead, an
+invented reference renders a real but wrong name, the very failure this was
+meant to remove.</p>
+<p>An earlier version had the model write the name next to the reference. It could
+still be wrong; it just put the right id beside the wrong word.</p>
+<h2 id="testing-a-prompt">Testing a prompt</h2>
+<p>Because lines are added conditionally, “the prompt” is really a family of
+prompts, and reading one tells you little. So the built prompts are
+snapshot-tested in every supported language, and the test file says a diff is a
+product change that must never be auto-accepted.</p>
+<p>The most useful test is the negative one: give it incomplete input and assert
+that the optional lines are absent, not empty. That is the rule in a form a
+machine can check, and it is what stops a future refactor from adding a helpful
+fallback string.</p>
+<h2 id="what-this-does-not-cover">What this does not cover</h2>
+<p>None of this controls interpretation. The model can still draw a wrong
+conclusion from correct facts.</p>
+<p>The cap can drop something important if the ranking is wrong, so the sort order
+matters more than it looks. And the reference scheme creates a contract between
+the prompt and the client; if the two drift apart, users see raw markers.</p>
+<p>What it does give is a clear line of responsibility. If a number is wrong, the
+engine is at fault, and there is one place to look.</p>
+</article><hr class="my-12"><div id="btt-btn-container" class="fixed inset-e-4 bottom-8 z-50 md:sticky md:inset-e-auto md:float-end md:me-1 translate-y-14 opacity-0 transition duration-500 motion-reduce:transition-none"><button data-button="back-to-top" class="group bg-background relative px-2 py-1 size-14 rounded-full shadow-xl md:h-8 md:w-fit md:rounded-md md:shadow-none md:focus-visible:rounded-none md:bg-background/35 md:bg-clip-padding md:backdrop-blur-lg"><span id="progress-indicator" class="absolute inset-0 -z-10 block size-14 scale-110 rounded-full bg-transparent md:hidden md:h-8 md:rounded-md"></span><svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="inline-block rotate-90 md:hidden" viewBox="0 0 24 24"><path stroke="none" d="M0 0h24v24H0z" /><path d="M5 12h14M5 12l6 6M5 12l6-6" /></svg><span class="group-hover:text-accent sr-only text-sm md:not-sr-only"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="inline-block size-4" viewBox="0 0 24 24"><path stroke="none" d="M0 0h24v24H0z" /><path d="M12 5v14M16 9l-4-4M8 9l4-4" /></svg>Back to top</span></button></div><script data-astro-rerun>
+  function backToTop() {
+    const rootElement = document.documentElement;
+    const btnContainer = document.querySelector("#btt-btn-container");
+    const backToTopBtn = document.querySelector("[data-button='back-to-top']");
+    const progressIndicator = document.querySelector("#progress-indicator");
+
+    if (!rootElement || !btnContainer || !backToTopBtn || !progressIndicator)
+      return;
+
+    backToTopBtn.addEventListener("click", () => {
+      document.body.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
+    });
+
+    let lastVisible = null;
+    function handleScroll() {
+      const scrollTotal = rootElement.scrollHeight - rootElement.clientHeight;
+      const scrollTop = rootElement.scrollTop;
+      const scrollPercent = Math.floor((scrollTop / scrollTotal) * 100);
+
+      progressIndicator.style.setProperty(
+        "background-image",
+        `conic-gradient(var(--accent), var(--accent) ${scrollPercent}%, transparent ${scrollPercent}%)`
+      );
+
+      const isVisible = scrollTop / scrollTotal > 0.3;
+
+      if (isVisible !== lastVisible) {
+        btnContainer.classList.toggle("opacity-100", isVisible);
+        btnContainer.classList.toggle("translate-y-0", isVisible);
+        btnContainer.classList.toggle("opacity-0", !isVisible);
+        btnContainer.classList.toggle("translate-y-14", !isVisible);
+        lastVisible = isVisible;
+      }
+    }
+
+    let ticking = false;
+    document.addEventListener("scroll", () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          handleScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+  }
+  backToTop();
+</script><div class="flex flex-none flex-col items-center justify-center gap-1 md:items-start"><span class="italic">Share this post:</span><div class="text-center"><a href="https://x.com/intent/post?url=https://koray.dev/posts/llm-cannot-hallucinate-what-you-never-sent/" title="Share this post on X" target="_blank" rel="noopener noreferrer" class="group inline-flex items-center gap-1 hover:text-accent scale-90 p-2 hover:rotate-6 sm:p-1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110" viewBox="0 0 24 24"><path stroke="none" d="M0 0h24v24H0z" /><path d="m4 4 11.733 16H20L8.267 4zM4 20l6.768-6.768m2.46-2.46L20 4" /></svg><span class="sr-only">Share this post on X</span></a><a href="https://www.linkedin.com/sharing/share-offsite/?url=https://koray.dev/posts/llm-cannot-hallucinate-what-you-never-sent/" title="Share this post on Linkedin" target="_blank" rel="noopener noreferrer" class="group inline-flex items-center gap-1 hover:text-accent scale-90 p-2 hover:rotate-6 sm:p-1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110" viewBox="0 0 24 24"><path stroke="none" d="M0 0h24v24H0z" /><path d="M8 11v5M8 8v.01M12 16v-5M16 16v-3a2 2 0 1 0-4 0" /><path d="M3 7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z" /></svg><span class="sr-only">Share this post on Linkedin</span></a><a href="mailto:?subject=See%20this%20post&amp;body=https://koray.dev/posts/llm-cannot-hallucinate-what-you-never-sent/" title="Share this post via email" target="_blank" rel="noopener noreferrer" class="group inline-flex items-center gap-1 hover:text-accent scale-90 p-2 hover:rotate-6 sm:p-1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110" viewBox="0 0 24 24"><path stroke="none" d="M0 0h24v24H0z" /><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><path d="m3 7 9 6 9-6" /></svg><span class="sr-only">Share this post via email</span></a></div></div><hr class="my-12"><div data-pagefind-ignore class="my-8 grid grid-cols-1 gap-6 sm:grid-cols-2"><a href="/posts/cache-the-prompt-not-the-inputs/" class="flex w-full gap-1 hover:opacity-75"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="inline-block flex-none rtl:rotate-180" viewBox="0 0 24 24"><path stroke="none" d="M0 0h24v24H0z" /><path d="M5 12h14M5 12l6 6M5 12l6-6" /></svg><div><span>Previous post</span><div class="text-accent/85 text-sm">Cache the prompt, not the inputs</div></div></a></div></main><footer class="app-frame mt-auto pt-28 pb-10 sm:pt-40"><div class="border-t pt-10 sm:pt-14"><a href="https://koative.com/" class="group font-display inline-flex items-baseline gap-[0.3em] text-[clamp(2.5rem,7vw,5.5rem)] leading-[0.95] font-medium tracking-[-0.035em]"><span>Hire</span><span class="koative" data-astro-cid-sikw472e><span class="dots" aria-hidden="true" data-astro-cid-sikw472e><i data-astro-cid-sikw472e></i><i data-astro-cid-sikw472e></i></span>koative</span><span aria-hidden="true" class="text-muted-foreground group-hover:text-foreground inline-block transition-transform duration-300 ease-out group-hover:translate-x-[0.12em] motion-reduce:transition-none">→</span></a><div class="text-muted-foreground mt-10 flex flex-col gap-3 text-sm sm:mt-14 sm:flex-row sm:items-center sm:justify-between"><a href="mailto:hello@koray.dev" class="link-quiet text-foreground text-base sm:text-lg">hello@koray.dev</a><p class="flex gap-5"><a href="/rss.xml" class="link-quiet hover:text-foreground">RSS</a><span>© 2026 Koray Güler</span></p></div></div></footer></body></html><script data-astro-rerun>
+  function createProgressBar() {
+    const progressContainer = document.createElement("div");
+    progressContainer.className =
+      "progress-container fixed top-0 z-10 h-1 w-full bg-background";
+
+    const progressBar = document.createElement("div");
+    progressBar.className = "progress-bar h-1 w-0 bg-accent";
+    progressBar.id = "myBar";
+
+    progressContainer.appendChild(progressBar);
+    document.body.appendChild(progressContainer);
+  }
+  createProgressBar();
+
+  function updateScrollProgress() {
+    document.addEventListener("scroll", () => {
+      const winScroll =
+        document.body.scrollTop || document.documentElement.scrollTop;
+      const height =
+        document.documentElement.scrollHeight -
+        document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      if (document) {
+        const myBar = document.getElementById("myBar");
+        if (myBar) {
+          myBar.style.width = scrolled + "%";
+        }
+      }
+    });
+  }
+  updateScrollProgress();
+
+  function addHeadingLinks() {
+    const headings = Array.from(
+      document.querySelectorAll("h2, h3, h4, h5, h6")
+    );
+    for (const heading of headings) {
+      heading.classList.add("group");
+      const link = document.createElement("a");
+      // px-1.5 makes the "#" a 24px-wide target; the label names it, since
+      // the glyph itself is hidden from assistive technology.
+      link.className =
+        "heading-link ms-0.5 inline-block px-1.5 no-underline opacity-75 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100";
+      link.href = "#" + heading.id;
+      link.setAttribute(
+        "aria-label",
+        `Link to section: ${heading.textContent}`
+      );
+
+      const span = document.createElement("span");
+      span.ariaHidden = "true";
+      span.innerText = "#";
+      link.appendChild(span);
+      heading.appendChild(link);
+    }
+  }
+  addHeadingLinks();
+
+  function attachCopyButtons() {
+    const copyButtonLabel = "Copy";
+    const codeBlocks = Array.from(document.querySelectorAll("pre"));
+
+    for (const codeBlock of codeBlocks) {
+      const wrapper = document.createElement("div");
+      wrapper.style.position = "relative";
+
+      const computedStyle = getComputedStyle(codeBlock);
+      const hasFileNameOffset =
+        computedStyle.getPropertyValue("--file-name-offset").trim() !== "";
+
+      const topClass = hasFileNameOffset
+        ? "top-(--file-name-offset)"
+        : "-top-3";
+
+      const copyButton = document.createElement("button");
+      copyButton.className = `copy-code absolute end-3 ${topClass} rounded bg-muted border border-muted px-2 py-1 text-xs leading-4 text-foreground font-medium`;
+      copyButton.innerHTML = copyButtonLabel;
+      codeBlock.setAttribute("tabindex", "0");
+      codeBlock.appendChild(copyButton);
+
+      codeBlock?.parentNode?.insertBefore(wrapper, codeBlock);
+      wrapper.appendChild(codeBlock);
+
+      copyButton.addEventListener("click", async () => {
+        await copyCode(codeBlock, copyButton);
+      });
+    }
+
+    async function copyCode(block, button) {
+      const code = block.querySelector("code");
+      const text = code?.innerText;
+
+      await navigator.clipboard.writeText(text ?? "");
+
+      button.innerText = "Copied";
+
+      setTimeout(() => {
+        button.innerText = copyButtonLabel;
+      }, 700);
+    }
+  }
+  attachCopyButtons();
+
+  document.addEventListener("astro:after-swap", () =>
+    window.scrollTo({ left: 0, top: 0, behavior: "instant" })
+  );
+</script>

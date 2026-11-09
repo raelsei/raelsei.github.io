@@ -1,0 +1,220 @@
+<!DOCTYPE html><html dir="ltr" lang="en" class="overflow-y-scroll motion-safe:scroll-smooth"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="canonical" href="https://koray.dev/posts/fire-and-forget-on-cloudflare-workers/"><meta name="generator" content="Astro v7.3.2"><style>@font-face{font-family:"Clash Grotesk-3be10869b52dabae";src:url("/_astro/fonts/4aba4c9fb0dc71af.woff2") format("woff2");font-display:block;font-weight:500;font-style:normal;}@font-face{font-family:"Clash Grotesk-3be10869b52dabae";src:url("/_astro/fonts/6985c4946467f5be.woff2") format("woff2");font-display:block;font-weight:600;font-style:normal;}@font-face{font-family:"Clash Grotesk-3be10869b52dabae fallback: Arial";src:local("Arial");font-display:swap;font-weight:500;font-style:normal;size-adjust:99.8204%;ascent-override:89.1602%;descent-override:25.045%;line-gap-override:9.0162%;}@font-face{font-family:"Clash Grotesk-3be10869b52dabae fallback: Arial";src:local("Arial");font-display:swap;font-weight:600;font-style:normal;size-adjust:99.8204%;ascent-override:89.1602%;descent-override:25.045%;line-gap-override:9.0162%;}:root{--font-clash:"Clash Grotesk-3be10869b52dabae","Clash Grotesk-3be10869b52dabae fallback: Arial",sans-serif;}</style><link rel="preload" href="/_astro/fonts/4aba4c9fb0dc71af.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/_astro/fonts/6985c4946467f5be.woff2" as="font" type="font/woff2" crossorigin><style>@font-face{font-family:Switzer-a9f0c8cf6491ec8e;src:url("/_astro/fonts/e7b33f4ed43f85e7.woff2") format("woff2");font-display:block;font-weight:400;font-style:normal;}@font-face{font-family:Switzer-a9f0c8cf6491ec8e;src:url("/_astro/fonts/4b191dd3fe36805d.woff2") format("woff2");font-display:block;font-weight:500;font-style:normal;}@font-face{font-family:Switzer-a9f0c8cf6491ec8e;src:url("/_astro/fonts/9d66ccbcb13e626b.woff2") format("woff2");font-display:block;font-weight:600;font-style:normal;}@font-face{font-family:"Switzer-a9f0c8cf6491ec8e fallback: Arial";src:local("Arial");font-display:swap;font-weight:400;font-style:normal;size-adjust:100.269%;ascent-override:97.7371%;descent-override:24.9329%;line-gap-override:8.9759%;}@font-face{font-family:"Switzer-a9f0c8cf6491ec8e fallback: Arial";src:local("Arial");font-display:swap;font-weight:500;font-style:normal;size-adjust:100.269%;ascent-override:97.7371%;descent-override:24.9329%;line-gap-override:8.9759%;}@font-face{font-family:"Switzer-a9f0c8cf6491ec8e fallback: Arial";src:local("Arial");font-display:swap;font-weight:600;font-style:normal;size-adjust:100.269%;ascent-override:97.7371%;descent-override:24.9329%;line-gap-override:8.9759%;}:root{--font-switzer:Switzer-a9f0c8cf6491ec8e,"Switzer-a9f0c8cf6491ec8e fallback: Arial",sans-serif;}</style><link rel="preload" href="/_astro/fonts/e7b33f4ed43f85e7.woff2" as="font" type="font/woff2" crossorigin><title>Fire-and-forget doesn&#39;t survive on Cloudflare Workers | Koray Güler</title><meta name="title" content="Fire-and-forget doesn't survive on Cloudflare Workers | Koray Güler"><meta name="description" content="A view counter returned 204 on every call and never moved. Workers can cancel work still pending after the response unless it is passed to waitUntil."><meta name="author" content="Koray Güler"><link rel="sitemap" href="/sitemap-index.xml"><!-- Open Graph --><meta property="og:type" content="website"><meta property="og:site_name" content="Koray Güler"><meta property="og:locale" content="en_US"><meta property="og:title" content="Fire-and-forget doesn't survive on Cloudflare Workers | Koray Güler"><meta property="og:description" content="A view counter returned 204 on every call and never moved. Workers can cancel work still pending after the response unless it is passed to waitUntil."><meta property="og:url" content="https://koray.dev/posts/fire-and-forget-on-cloudflare-workers/"><meta property="og:image" content="https://koray.dev/posts/fire-and-forget-on-cloudflare-workers/index.png"><!-- Twitter / X --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:site" content="@raelsei"><meta property="twitter:url" content="https://koray.dev/posts/fire-and-forget-on-cloudflare-workers/"><meta property="twitter:title" content="Fire-and-forget doesn't survive on Cloudflare Workers | Koray Güler"><meta property="twitter:description" content="A view counter returned 204 on every call and never moved. Workers can cancel work still pending after the response unless it is passed to waitUntil."><meta property="twitter:image" content="https://koray.dev/posts/fire-and-forget-on-cloudflare-workers/index.png"><link rel="alternate" type="application/rss+xml" title="Koray Güler" href="https://koray.dev/rss.xml"><link rel="me" href="https://x.com/raelsei"><link rel="me" href="https://github.com/raelsei"><link rel="me" href="https://linkedin.com/in/raelsei"><link rel="me" href="https://www.instagram.com/raelsei/"><link rel="me" href="https://www.youtube.com/@raelsei"><link rel="me" href="https://www.producthunt.com/@raelsei"><link rel="me" href="https://peerlist.io/raelsei"><link rel="me" href="https://www.reddit.com/user/raelsei/"><link rel="me" href="https://www.instagram.com/koray.dev/"><link rel="me" href="https://www.youtube.com/@korayguler"><link rel="me" href="https://www.tiktok.com/@raelsei"><link rel="me" href="https://bsky.app/profile/raelsei.bsky.social"><link rel="me" href="https://medium.com/@raelsei"><link rel="me" href="https://dev.to/raelsei"><link rel="me" href="https://www.npmjs.com/~raelsei"><link rel="me" href="https://gitlab.com/raelsei"><link rel="me" href="mailto:hello@koray.dev"><meta name="theme-color" content="#08080a"><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Person","@id":"https://koray.dev/#person","name":"Koray Güler","url":"https://koray.dev/","image":"https://koray.dev/_astro/koray-dark.DXGICd30_Z1gKIEW.jpg","email":"hello@koray.dev","jobTitle":"Founder","worksFor":{"@type":"Organization","@id":"https://koative.com/#org","name":"koative","url":"https://koative.com/"},"sameAs":["https://x.com/raelsei","https://github.com/raelsei","https://linkedin.com/in/raelsei","https://www.instagram.com/raelsei/","https://www.youtube.com/@raelsei","https://www.producthunt.com/@raelsei","https://peerlist.io/raelsei","https://www.reddit.com/user/raelsei/","https://www.instagram.com/koray.dev/","https://www.youtube.com/@korayguler","https://www.tiktok.com/@raelsei","https://bsky.app/profile/raelsei.bsky.social","https://medium.com/@raelsei","https://dev.to/raelsei","https://www.npmjs.com/~raelsei","https://gitlab.com/raelsei"]},{"@type":"WebSite","@id":"https://koray.dev/#website","url":"https://koray.dev/","name":"Koray Güler","description":"Koray Güler — product engineer in İstanbul. OpenMacApps, Bucketdeck, Cento, Rast.","inLanguage":"en","publisher":{"@id":"https://koray.dev/#person"}},{"@type":"WebPage","@id":"https://koray.dev/posts/fire-and-forget-on-cloudflare-workers/#webpage","url":"https://koray.dev/posts/fire-and-forget-on-cloudflare-workers/","name":"Fire-and-forget doesn't survive on Cloudflare Workers","description":"A view counter returned 204 on every call and never moved. Workers can cancel work still pending after the response unless it is passed to waitUntil.","isPartOf":{"@id":"https://koray.dev/#website"},"inLanguage":"en","about":{"@id":"https://koray.dev/#person"}},{"@type":"BlogPosting","@id":"https://koray.dev/posts/fire-and-forget-on-cloudflare-workers/#post","mainEntityOfPage":{"@id":"https://koray.dev/posts/fire-and-forget-on-cloudflare-workers/#webpage"},"headline":"Fire-and-forget doesn't survive on Cloudflare Workers","description":"A view counter returned 204 on every call and never moved. Workers can cancel work still pending after the response unless it is passed to waitUntil.","image":"https://koray.dev/posts/fire-and-forget-on-cloudflare-workers/index.png","datePublished":"2026-06-05T06:00:00.000Z","keywords":["cloudflare","correctness"],"inLanguage":"en","author":{"@id":"https://koray.dev/#person"},"publisher":{"@id":"https://koray.dev/#person"},"isPartOf":{"@id":"https://koray.dev/#website"}},{"@type":"BreadcrumbList","@id":"https://koray.dev/posts/fire-and-forget-on-cloudflare-workers/#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://koray.dev/"},{"@type":"ListItem","position":2,"name":"Writing","item":"https://koray.dev/writing/"},{"@type":"ListItem","position":3,"name":"Fire and forget on cloudflare workers"}]}]}</script><meta property="og:type" content="article"><meta property="article:published_time" content="2026-06-05T06:00:00.000Z"><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="animate"><script type="module" src="/_astro/ClientRouter.astro_astro_type_script_index_0_lang.CYDbzu1r.js"></script><link rel="stylesheet" href="/_astro/Footer.dRhN1JkO.css"></head><body class="bg-background font-app text-foreground flex min-h-svh flex-col"><a id="skip-to-content" href="#main-content" class="bg-foreground text-background absolute start-4 -top-full z-50 px-3 py-2 focus:top-4">Skip to content</a><header class="app-frame flex items-center justify-between gap-6 py-6 sm:py-8"><a href="/" class="font-display shrink-0 text-xl leading-none font-semibold tracking-[-0.02em] sm:text-2xl">Koray Güler</a><nav aria-label="Main"><ul class="text-soft flex gap-x-4 text-[0.9375rem] sm:gap-x-8 sm:text-base"><li><a href="/#work" class="link-quiet hover:text-foreground aria-[current=page]:text-foreground aria-[current=page]:decoration-foreground -my-3 inline-block py-3">Work</a></li><li><a href="/#log" class="link-quiet hover:text-foreground aria-[current=page]:text-foreground aria-[current=page]:decoration-foreground -my-3 inline-block py-3">Log</a></li><li><a href="/writing/" aria-current="page" class="link-quiet hover:text-foreground aria-[current=page]:text-foreground aria-[current=page]:decoration-foreground -my-3 inline-block py-3">Writing</a></li><li><a href="/about/" class="link-quiet hover:text-foreground aria-[current=page]:text-foreground aria-[current=page]:decoration-foreground -my-3 inline-block py-3">About</a></li></ul></nav></header><script type="module">function e(){let e=document.getElementById(`skip-to-content`);e&&e.addEventListener(`click`,e=>{if(e.defaultPrevented||e.metaKey||e.ctrlKey||e.shiftKey||e.button!==0)return;e.preventDefault();let t=document.getElementById(`main-content`);t&&(t.setAttribute(`tabindex`,`-1`),t.addEventListener(`blur`,()=>t.removeAttribute(`tabindex`),{once:!0}),t.focus(),t.scrollIntoView({behavior:matchMedia(`(prefers-reduced-motion: reduce)`).matches?`auto`:`smooth`}))})}e(),document.addEventListener(`astro:after-swap`,e);</script><div class="app-layout flex items-center justify-start"><a id="back-button" href="/" class="group inline-flex items-center gap-1 hover:text-accent focus-outline hover:text-foreground/75 -ms-2 mt-8 mb-2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="inline-block size-6 rtl:rotate-180" viewBox="0 0 24 24"><path stroke="none" d="M0 0h24v24H0z" /><path d="m15 6-6 6 6 6" /></svg><span>Go back</span></a></div><script type="module">function e(){let e=document.querySelector(`#back-button`),t=sessionStorage.getItem(`backUrl`);t&&e&&(e.href=t)}document.addEventListener(`astro:page-load`,e),e();</script><main id="main-content" class="app-layout" data-pagefind-body><p class="text-muted-foreground text-sm tabular-nums mt-6" style="view-transition-name:fire-and-forget-on-cloudflare-workers-date"><time datetime="2026-06-05T06:00:00.000Z">5 Jun 2026</time><span aria-hidden="true">&ensp;·&ensp;</span><span>3 min read</span></p><h1 style="view-transition-name:fire-and-forget-on-cloudflare-workers" class="font-display mt-3 text-[clamp(2.25rem,5.5vw,3.5rem)] leading-[1.04] font-medium tracking-[-0.03em]">Fire-and-forget doesn&#39;t survive on Cloudflare Workers</h1><article id="article" class="app-prose mt-12 w-full"><p>Detail pages are cached with a long revalidation window, so a view counter
+cannot be incremented during render; the count would freeze into the cached
+HTML. The standard alternative is a small endpoint the client pings, without
+making anyone wait for the write:</p>
+<pre class="astro-code vitesse-dark mt-8" style="background-color:#121212;color:#dbd7caee; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#4D9375">export</span><span style="color:#CB7676"> async</span><span style="color:#CB7676"> function</span><span style="color:#80A665"> POST</span><span style="color:#808080">(</span></span>
+<span class="line"><span style="color:#BD976A">  req</span><span style="color:#808080">: </span><span style="color:#5DA994">Request</span><span style="color:#808080">,</span></span>
+<span class="line"><span style="color:#BD976A">  ctx</span><span style="color:#808080">: { </span><span style="color:#BD976A">params</span><span style="color:#808080">: </span><span style="color:#5DA994">Promise</span><span style="color:#808080">&lt;{ </span><span style="color:#BD976A">id</span><span style="color:#808080">: </span><span style="color:#5DA994">string</span><span style="color:#808080"> }&gt; }</span></span>
+<span class="line"><span style="color:#808080">)</span><span style="color:#808080"> {</span></span>
+<span class="line"><span style="color:#CB7676">  const </span><span style="color:#808080">{</span><span style="color:#BD976A"> id</span><span style="color:#808080"> }</span><span style="color:#808080"> =</span><span style="color:#4D9375"> await</span><span style="color:#BD976A"> ctx</span><span style="color:#808080">.</span><span style="color:#BD976A">params</span><span style="color:#808080">;</span></span>
+<span class="line"><span style="color:#CB7676">  void</span><span style="color:#80A665"> bumpViews</span><span style="color:#808080">(</span><span style="color:#BD976A">id</span><span style="color:#808080">).</span><span style="color:#80A665">catch</span><span style="color:#808080">(()</span><span style="color:#808080"> =&gt;</span><span style="color:#808080"> {});</span><span style="color:#788878"> // don't block the response</span></span>
+<span class="line"><span style="color:#4D9375">  return</span><span style="color:#CB7676"> new</span><span style="color:#80A665"> Response</span><span style="color:#808080">(</span><span style="color:#CB7676">null</span><span style="color:#808080">,</span><span style="color:#808080"> { </span><span style="color:#B8A965">status</span><span style="color:#808080">: </span><span style="color:#4C9A91">204</span><span style="color:#808080"> });</span></span>
+<span class="line"><span style="color:#808080">}</span></span></code><span class="absolute py-1 text-xs font-medium leading-4 text-foreground pl-4 pr-2 before:inline-block before:size-1 before:bg-muted-foreground before:rounded-full before:absolute before:top-[45%] before:left-2 left-2 top-(--file-name-offset) border rounded-md bg-background">beacon.ts</span></pre>
+<p>The counter never moved. Not slowly, not sometimes: never. The endpoint returned
+204 on every call, the logs were clean, and there were no exceptions, errors or
+timeouts. The only way to see the bug was to read the row in the database.</p>
+<h2 id="why-the-write-disappeared">Why the write disappeared</h2>
+<p>This runs on Cloudflare Workers, where a request does not live inside a
+long-running process. Once the response is done, the runtime can cancel any work
+still pending unless it was registered with <code>ctx.waitUntil()</code>. That is the
+default behaviour, not a setting.</p>
+<p>My first guess was a compatibility flag about promises that cross request
+contexts. It was enabled, but it is unrelated: it covers continuations scheduled
+from a different request. There is no flag to turn off here.</p>
+<p>So the update was started and then abandoned somewhere before it committed. The
+only thing visible from outside was the 204 I had hard-coded.</p>
+<h2 id="the-fix-await-it">The fix: await it</h2>
+<pre class="astro-code vitesse-dark code-accent mt-8" style="background-color:#121212;color:#dbd7caee; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="typescript"><code><span class="line"><span style="color:#4D9375">export</span><span style="color:#CB7676"> async</span><span style="color:#CB7676"> function</span><span style="color:#80A665"> POST</span><span style="color:#808080">(</span></span>
+<span class="line"><span style="color:#BD976A">  req</span><span style="color:#808080">: </span><span style="color:#5DA994">Request</span><span style="color:#808080">,</span></span>
+<span class="line"><span style="color:#BD976A">  ctx</span><span style="color:#808080">: { </span><span style="color:#BD976A">params</span><span style="color:#808080">: </span><span style="color:#5DA994">Promise</span><span style="color:#808080">&lt;{ </span><span style="color:#BD976A">id</span><span style="color:#808080">: </span><span style="color:#5DA994">string</span><span style="color:#808080"> }&gt; }</span></span>
+<span class="line"><span style="color:#808080">)</span><span style="color:#808080"> {</span></span>
+<span class="line"><span style="color:#CB7676">  const </span><span style="color:#808080">{</span><span style="color:#BD976A"> id</span><span style="color:#808080"> }</span><span style="color:#808080"> =</span><span style="color:#4D9375"> await</span><span style="color:#BD976A"> ctx</span><span style="color:#808080">.</span><span style="color:#BD976A">params</span><span style="color:#808080">;</span></span>
+<span class="line"><span style="color:#4D9375">  try</span><span style="color:#808080"> {</span></span>
+<span class="line"><span style="color:#4D9375">    await</span><span style="color:#80A665"> bumpViews</span><span style="color:#808080">(</span><span style="color:#BD976A">id</span><span style="color:#808080">);</span></span>
+<span class="line"><span style="color:#808080">  }</span><span style="color:#4D9375"> catch</span><span style="color:#808080"> {</span></span>
+<span class="line"><span style="color:#788878">    // A database blip must not turn a beacon into a 5xx.</span></span>
+<span class="line"><span style="color:#808080">  }</span></span>
+<span class="line"><span style="color:#4D9375">  return</span><span style="color:#CB7676"> new</span><span style="color:#80A665"> Response</span><span style="color:#808080">(</span><span style="color:#CB7676">null</span><span style="color:#808080">,</span><span style="color:#808080"> { </span><span style="color:#B8A965">status</span><span style="color:#808080">: </span><span style="color:#4C9A91">204</span><span style="color:#808080"> });</span></span>
+<span class="line"><span style="color:#808080">}</span></span></code><span class="absolute py-1 text-xs font-medium leading-4 text-accent border-accent pl-4 pr-2 before:inline-block before:size-1 before:bg-accent before:rounded-full before:absolute before:top-[45%] before:left-2 left-2 top-(--file-name-offset) border rounded-md bg-background">beacon.ts</span></pre>
+<p>“Don’t await side effects on the response path” is good advice on a long-lived
+server, where the process outlives the request and gets to the promise
+eventually. On Workers nothing outlives the request unless you ask for it.</p>
+<p>For this endpoint, awaiting costs nothing anyone sees, because the client never
+reads the response. Where latency matters, <code>ctx.waitUntil()</code> is the right tool:
+it keeps the invocation alive for a bounded time after the response is sent. In
+Next.js, <code>after()</code> does the same job on platforms that back it with <code>waitUntil</code>.
+The cache writes in the image proxy, which runs outside Next’s routing, use
+<code>waitUntil</code> directly.</p>
+<h2 id="the-client-side-fails-open">The client side fails open</h2>
+<p>The beacon waits a few seconds before firing, to skip bounces, and deduplicates
+per browsing session so a re-render does not count twice. If the session storage
+it relies on is unavailable, it fires anyway.</p>
+<p>That is deliberate. Over-counting gives a number slightly too high. Silently
+dropping gives a number that is wrong in a direction nobody investigates,
+because it looks plausible.</p>
+<h2 id="trade-offs">Trade-offs</h2>
+<p>The endpoint now fails when the database does. Before, it failed silently and
+looked fine. That is an improvement, and it is still a new dependency on a
+high-traffic path.</p>
+<p>There is no rate limit. Each call adds one, so the count is only as trustworthy
+as the endpoint is obscure. That is a known gap.</p>
+<p>The general check: whenever you write <code>void something()</code>, ask what keeps it
+alive after the function returns. If the answer is “the runtime, probably”,
+verify it.</p>
+</article><hr class="my-12"><div id="btt-btn-container" class="fixed inset-e-4 bottom-8 z-50 md:sticky md:inset-e-auto md:float-end md:me-1 translate-y-14 opacity-0 transition duration-500 motion-reduce:transition-none"><button data-button="back-to-top" class="group bg-background relative px-2 py-1 size-14 rounded-full shadow-xl md:h-8 md:w-fit md:rounded-md md:shadow-none md:focus-visible:rounded-none md:bg-background/35 md:bg-clip-padding md:backdrop-blur-lg"><span id="progress-indicator" class="absolute inset-0 -z-10 block size-14 scale-110 rounded-full bg-transparent md:hidden md:h-8 md:rounded-md"></span><svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="inline-block rotate-90 md:hidden" viewBox="0 0 24 24"><path stroke="none" d="M0 0h24v24H0z" /><path d="M5 12h14M5 12l6 6M5 12l6-6" /></svg><span class="group-hover:text-accent sr-only text-sm md:not-sr-only"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="inline-block size-4" viewBox="0 0 24 24"><path stroke="none" d="M0 0h24v24H0z" /><path d="M12 5v14M16 9l-4-4M8 9l4-4" /></svg>Back to top</span></button></div><script data-astro-rerun>
+  function backToTop() {
+    const rootElement = document.documentElement;
+    const btnContainer = document.querySelector("#btt-btn-container");
+    const backToTopBtn = document.querySelector("[data-button='back-to-top']");
+    const progressIndicator = document.querySelector("#progress-indicator");
+
+    if (!rootElement || !btnContainer || !backToTopBtn || !progressIndicator)
+      return;
+
+    backToTopBtn.addEventListener("click", () => {
+      document.body.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
+    });
+
+    let lastVisible = null;
+    function handleScroll() {
+      const scrollTotal = rootElement.scrollHeight - rootElement.clientHeight;
+      const scrollTop = rootElement.scrollTop;
+      const scrollPercent = Math.floor((scrollTop / scrollTotal) * 100);
+
+      progressIndicator.style.setProperty(
+        "background-image",
+        `conic-gradient(var(--accent), var(--accent) ${scrollPercent}%, transparent ${scrollPercent}%)`
+      );
+
+      const isVisible = scrollTop / scrollTotal > 0.3;
+
+      if (isVisible !== lastVisible) {
+        btnContainer.classList.toggle("opacity-100", isVisible);
+        btnContainer.classList.toggle("translate-y-0", isVisible);
+        btnContainer.classList.toggle("opacity-0", !isVisible);
+        btnContainer.classList.toggle("translate-y-14", !isVisible);
+        lastVisible = isVisible;
+      }
+    }
+
+    let ticking = false;
+    document.addEventListener("scroll", () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          handleScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+  }
+  backToTop();
+</script><div class="flex flex-none flex-col items-center justify-center gap-1 md:items-start"><span class="italic">Share this post:</span><div class="text-center"><a href="https://x.com/intent/post?url=https://koray.dev/posts/fire-and-forget-on-cloudflare-workers/" title="Share this post on X" target="_blank" rel="noopener noreferrer" class="group inline-flex items-center gap-1 hover:text-accent scale-90 p-2 hover:rotate-6 sm:p-1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110" viewBox="0 0 24 24"><path stroke="none" d="M0 0h24v24H0z" /><path d="m4 4 11.733 16H20L8.267 4zM4 20l6.768-6.768m2.46-2.46L20 4" /></svg><span class="sr-only">Share this post on X</span></a><a href="https://www.linkedin.com/sharing/share-offsite/?url=https://koray.dev/posts/fire-and-forget-on-cloudflare-workers/" title="Share this post on Linkedin" target="_blank" rel="noopener noreferrer" class="group inline-flex items-center gap-1 hover:text-accent scale-90 p-2 hover:rotate-6 sm:p-1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110" viewBox="0 0 24 24"><path stroke="none" d="M0 0h24v24H0z" /><path d="M8 11v5M8 8v.01M12 16v-5M16 16v-3a2 2 0 1 0-4 0" /><path d="M3 7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z" /></svg><span class="sr-only">Share this post on Linkedin</span></a><a href="mailto:?subject=See%20this%20post&amp;body=https://koray.dev/posts/fire-and-forget-on-cloudflare-workers/" title="Share this post via email" target="_blank" rel="noopener noreferrer" class="group inline-flex items-center gap-1 hover:text-accent scale-90 p-2 hover:rotate-6 sm:p-1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110" viewBox="0 0 24 24"><path stroke="none" d="M0 0h24v24H0z" /><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><path d="m3 7 9 6 9-6" /></svg><span class="sr-only">Share this post via email</span></a></div></div><hr class="my-12"><div data-pagefind-ignore class="my-8 grid grid-cols-1 gap-6 sm:grid-cols-2"><a href="/posts/what-a-non-extractable-key-protects/" class="flex w-full gap-1 hover:opacity-75"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="inline-block flex-none rtl:rotate-180" viewBox="0 0 24 24"><path stroke="none" d="M0 0h24v24H0z" /><path d="M5 12h14M5 12l6 6M5 12l6-6" /></svg><div><span>Previous post</span><div class="text-accent/85 text-sm">What a non-extractable key actually protects</div></div></a><a href="/posts/cache-the-prompt-not-the-inputs/" class="flex w-full justify-end gap-1 text-end hover:opacity-75 sm:col-start-2"><div><span>Next post</span><div class="text-accent/85 text-sm">Cache the prompt, not the inputs</div></div><svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="inline-block flex-none rtl:rotate-180" viewBox="0 0 24 24"><path stroke="none" d="M0 0h24v24H0z" /><path d="M5 12h14M13 18l6-6M13 6l6 6" /></svg></a></div></main><footer class="app-frame mt-auto pt-28 pb-10 sm:pt-40"><div class="border-t pt-10 sm:pt-14"><a href="https://koative.com/" class="group font-display inline-flex items-baseline gap-[0.3em] text-[clamp(2.5rem,7vw,5.5rem)] leading-[0.95] font-medium tracking-[-0.035em]"><span>Hire</span><span class="koative" data-astro-cid-sikw472e><span class="dots" aria-hidden="true" data-astro-cid-sikw472e><i data-astro-cid-sikw472e></i><i data-astro-cid-sikw472e></i></span>koative</span><span aria-hidden="true" class="text-muted-foreground group-hover:text-foreground inline-block transition-transform duration-300 ease-out group-hover:translate-x-[0.12em] motion-reduce:transition-none">→</span></a><div class="text-muted-foreground mt-10 flex flex-col gap-3 text-sm sm:mt-14 sm:flex-row sm:items-center sm:justify-between"><a href="mailto:hello@koray.dev" class="link-quiet text-foreground text-base sm:text-lg">hello@koray.dev</a><p class="flex gap-5"><a href="/rss.xml" class="link-quiet hover:text-foreground">RSS</a><span>© 2026 Koray Güler</span></p></div></div></footer></body></html><script data-astro-rerun>
+  function createProgressBar() {
+    const progressContainer = document.createElement("div");
+    progressContainer.className =
+      "progress-container fixed top-0 z-10 h-1 w-full bg-background";
+
+    const progressBar = document.createElement("div");
+    progressBar.className = "progress-bar h-1 w-0 bg-accent";
+    progressBar.id = "myBar";
+
+    progressContainer.appendChild(progressBar);
+    document.body.appendChild(progressContainer);
+  }
+  createProgressBar();
+
+  function updateScrollProgress() {
+    document.addEventListener("scroll", () => {
+      const winScroll =
+        document.body.scrollTop || document.documentElement.scrollTop;
+      const height =
+        document.documentElement.scrollHeight -
+        document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      if (document) {
+        const myBar = document.getElementById("myBar");
+        if (myBar) {
+          myBar.style.width = scrolled + "%";
+        }
+      }
+    });
+  }
+  updateScrollProgress();
+
+  function addHeadingLinks() {
+    const headings = Array.from(
+      document.querySelectorAll("h2, h3, h4, h5, h6")
+    );
+    for (const heading of headings) {
+      heading.classList.add("group");
+      const link = document.createElement("a");
+      // px-1.5 makes the "#" a 24px-wide target; the label names it, since
+      // the glyph itself is hidden from assistive technology.
+      link.className =
+        "heading-link ms-0.5 inline-block px-1.5 no-underline opacity-75 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100";
+      link.href = "#" + heading.id;
+      link.setAttribute(
+        "aria-label",
+        `Link to section: ${heading.textContent}`
+      );
+
+      const span = document.createElement("span");
+      span.ariaHidden = "true";
+      span.innerText = "#";
+      link.appendChild(span);
+      heading.appendChild(link);
+    }
+  }
+  addHeadingLinks();
+
+  function attachCopyButtons() {
+    const copyButtonLabel = "Copy";
+    const codeBlocks = Array.from(document.querySelectorAll("pre"));
+
+    for (const codeBlock of codeBlocks) {
+      const wrapper = document.createElement("div");
+      wrapper.style.position = "relative";
+
+      const computedStyle = getComputedStyle(codeBlock);
+      const hasFileNameOffset =
+        computedStyle.getPropertyValue("--file-name-offset").trim() !== "";
+
+      const topClass = hasFileNameOffset
+        ? "top-(--file-name-offset)"
+        : "-top-3";
+
+      const copyButton = document.createElement("button");
+      copyButton.className = `copy-code absolute end-3 ${topClass} rounded bg-muted border border-muted px-2 py-1 text-xs leading-4 text-foreground font-medium`;
+      copyButton.innerHTML = copyButtonLabel;
+      codeBlock.setAttribute("tabindex", "0");
+      codeBlock.appendChild(copyButton);
+
+      codeBlock?.parentNode?.insertBefore(wrapper, codeBlock);
+      wrapper.appendChild(codeBlock);
+
+      copyButton.addEventListener("click", async () => {
+        await copyCode(codeBlock, copyButton);
+      });
+    }
+
+    async function copyCode(block, button) {
+      const code = block.querySelector("code");
+      const text = code?.innerText;
+
+      await navigator.clipboard.writeText(text ?? "");
+
+      button.innerText = "Copied";
+
+      setTimeout(() => {
+        button.innerText = copyButtonLabel;
+      }, 700);
+    }
+  }
+  attachCopyButtons();
+
+  document.addEventListener("astro:after-swap", () =>
+    window.scrollTo({ left: 0, top: 0, behavior: "instant" })
+  );
+</script>
